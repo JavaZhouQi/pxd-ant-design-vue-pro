@@ -12,7 +12,6 @@ Router.prototype.push = function push (location, onResolve, onReject) {
 Vue.use(Router)
 
 export default new Router({
-  base: '/admin/',
   mode: 'history',
   routes: constantRouterMap
 })

@@ -40,6 +40,18 @@
               <a-icon slot="prefix" type="lock" :style="{ color: 'rgba(0,0,0,.25)' }"/>
             </a-input-password>
           </a-form-item>
+
+          <a-form-item>
+            <a-input
+              size="large"
+              placeholder="code"
+              style="width:78%"
+              v-decorator="[
+                'code',
+                {rules: [{ required: true, message: '请输入验证码!' }]}
+              ]"/>
+            <img height="40px" @click="refreshVerification" :src="'data:image/png;base64,' + verificationImage">
+          </a-form-item>
         </a-tab-pane>
         <a-tab-pane key="tab2" :tab="$t('user.login.tab-login-mobile')">
           <a-form-item>
@@ -114,11 +126,10 @@
 </template>
 
 <script>
-import md5 from 'md5'
 import TwoStepCaptcha from '@/components/tools/TwoStepCaptcha'
 import { mapActions } from 'vuex'
 import { timeFix } from '@/utils/util'
-import { getSmsCaptcha, get2step } from '@/api/login'
+import { getSmsCaptcha, get2step, getVerification } from '@/api/login'
 
 export default {
   components: {
@@ -126,6 +137,8 @@ export default {
   },
   data () {
     return {
+      verificationImage: '',
+      verificationCodeId: '',
       customActiveKey: 'tab1',
       loginBtn: false,
       // login type: 0 email, 1 username, 2 telephone
@@ -144,6 +157,7 @@ export default {
     }
   },
   created () {
+    this.refreshVerification()
     get2step({ })
       .then(res => {
         this.requiredTwoStepCaptcha = res.result.stepCode
@@ -181,20 +195,21 @@ export default {
 
       state.loginBtn = true
 
-      const validateFieldsKey = customActiveKey === 'tab1' ? ['username', 'password'] : ['mobile', 'captcha']
-
+      const validateFieldsKey = customActiveKey === 'tab1' ? ['username', 'password', 'code'] : ['mobile', 'captcha']
       validateFields(validateFieldsKey, { force: true }, (err, values) => {
         if (!err) {
           console.log('login form', values)
           const loginParams = { ...values }
           delete loginParams.username
           loginParams[!state.loginType ? 'email' : 'username'] = values.username
-          loginParams.password = md5(values.password)
+          loginParams.codeId = this.verificationCodeId
+
           Login(loginParams)
             .then((res) => this.loginSuccess(res))
             .catch(err => this.requestFailed(err))
             .finally(() => {
               state.loginBtn = false
+              this.refreshVerification()
             })
         } else {
           setTimeout(() => {
@@ -276,6 +291,14 @@ export default {
         description: ((err.response || {}).data || {}).message || '请求出现错误，请稍后再试',
         duration: 4
       })
+    },
+    refreshVerification () {
+      getVerification().then(res => {
+            this.verificationImage = res.data.image
+            this.verificationCodeId = res.data.codeId
+          }).catch(err => {
+            console.log(err)
+          })
     }
   }
 }
