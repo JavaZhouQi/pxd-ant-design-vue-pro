@@ -5,15 +5,15 @@ const GitRevision = new GitRevisionPlugin()
 const buildDate = JSON.stringify(new Date().toLocaleString())
 const createThemeColorReplacerPlugin = require('./config/plugin.config')
 
-function resolve (dir) {
+function resolve(dir) {
   return path.join(__dirname, dir)
 }
 
 // check Git
-function getGitHash () {
+function getGitHash() {
   try {
     return GitRevision.version()
-  } catch (e) {}
+  } catch (e) { }
   return 'unknown'
 }
 
@@ -39,6 +39,9 @@ const assetsCDN = {
 
 // vue.config.js
 const vueConfig = {
+  publicPath: '/admin/',//根路径 cli3.0以上使用publicPath
+  //assetsDir:'assets',//静态资源目录(js,css,img,fonts)这些文件都可以写里面
+  outputDir: 'dist',//打包的时候生成的一个文件名
   configureWebpack: {
     // webpack plugins
     plugins: [
